@@ -27,8 +27,6 @@ builder.Services
     .AddScoped<IRefund, RefundRepository>()
     .AddScoped<IAuthService, AuthService>();
 
-//.AddIdentity<UserRepository, IdentityRole>();
-
 // Add Stripe Infrastructure
 builder.Services.AddStripeInfrastructure(builder.Configuration);
 
@@ -45,17 +43,7 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-//string logpath = builder.Configuration.GetSection("Logging:LogPath").Value;
-//var logger = new LoggerConfiguration()
-//    .MinimumLevel.Debug()
-//    .MinimumLevel.Override("microsoft", Serilog.Events.LogEventLevel.Warning)
-//    .Enrich.FromLogContext()
-//    .WriteTo.File(logpath)
-//    .CreateLogger();
-//builder.Logging.AddSerilog(logger);
-
-
-// Authorization
+// Add Authorization
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "E-PaymentSystemAPI", Version = "v1" });
@@ -112,6 +100,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = tokenValidationParameters;
     });
 
+// Add CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder.AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -125,6 +124,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("CorsPolicy");
 
 app.MapControllers();
 
